@@ -25,18 +25,9 @@ class UserController {
 
   async getUser(req, res) {
     const { id } = req.params;
-    const query = `SELECT id, email FROM users WHERE id = $1`;
-    const values = [id];
-    // const user = await db.query(query, values);
-    return res.status(200).json({
-      message: "User fetched successfully",
-      user: {
-        name: "John Doe",
-        email: "john.doe@example.com",
-        password: "123456",
-      },
-    });
-    // return res.status(200).json(user);
+    const query = `SELECT id, email FROM "user" WHERE id = $1`;
+    const user = await db.query(query, [id]);
+    res.status(200).json(user.rows[0]);
   }
 }
 
