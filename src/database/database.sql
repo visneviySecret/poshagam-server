@@ -4,6 +4,12 @@ CREATE TABLE "user"(
     password VARCHAR(255)
 );
 
+CREATE TABLE token(
+    user_id INTEGER,
+    FOREIGN KEY (user_id) REFERENCES "user"(id),
+    refresh_token TEXT
+);
+
 CREATE TABLE address(
     id SERIAL PRIMARY KEY,
     user_id INTEGER,

@@ -1,33 +1,50 @@
 import db from "../database/database";
-import bcrypt from "bcrypt";
+import UserService from "../service/user.service";
 
 class UserController {
-  async createUser(req, res) {
-    const { email, password } = req.body;
-    const candidate = await db.query(`SELECT * FROM "user" WHERE email = $1`, [
-      email,
-    ]);
-    if (candidate.rows.length) {
-      return res.status(400).json({ message: "User already exists" });
+  async signup(req, res) {
+    try {
+      const { email, password } = req.body;
+      const newUser = await UserService.signup(email, password);
+      res.status(201).json(newUser);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
     }
-    const hashPassword = await bcrypt.hash(password, 10);
-    const query = `INSERT INTO "user" (email, password) VALUES ($1, $2) RETURNING *`;
-    const values = [email, hashPassword];
-    const newUser = await db.query(query, values);
-    res.status(201).json(newUser.rows[0]);
   }
 
+  async login(req, res) {
+    try {
+      const { email, password } = req.body;
+      const user = await UserService.login(email, password);
+      res.status(200).json(user);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  async logout(req, res) {
+    try {
+      const { refreshToken } = req.body;
+      await UserService.logout(refreshToken);
+      res.status(200).json({ message: "Logged out" });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  async refreshToken(req, res) {
+    try {
+      const { refreshToken } = req.body;
+      const user = await UserService.refreshToken(refreshToken);
+      res.status(200).json(user);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
   async getUsers(req, res) {
     const query = `SELECT id, email FROM "user"`;
     const users = await db.query(query);
     res.status(200).json(users.rows);
-  }
-
-  async getUser(req, res) {
-    const { id } = req.params;
-    const query = `SELECT id, email FROM "user" WHERE id = $1`;
-    const user = await db.query(query, [id]);
-    res.status(200).json(user.rows[0]);
   }
 }
 
