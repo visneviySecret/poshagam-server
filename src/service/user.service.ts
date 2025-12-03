@@ -64,6 +64,14 @@ class UserService {
     await TokenService.saveToken(user.rows[0].id, tokens.refreshToken);
     return { ...user.rows[0], tokens };
   }
+
+  async getMe(userId: string) {
+    const user = await db.query(`SELECT * FROM "user" WHERE id = $1`, [userId]);
+    if (!user.rows.length) {
+      throw new Error("User not found");
+    }
+    return user.rows[0];
+  }
 }
 
 export default new UserService();
