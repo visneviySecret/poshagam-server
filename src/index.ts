@@ -1,13 +1,20 @@
-import UserRouter from "./router/user.router";
-import dotenv from "dotenv";
 import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import router from "./router";
 dotenv.config({ quiet: true });
 
 const port = process.env.API_PORT || 5000;
 
 const app = express();
 app.use(express.json());
-app.use("/users", UserRouter);
+app.use(
+  cors({
+    credentials: true,
+    origin: process.env.CLIENT_URL,
+  })
+);
+app.use("/api", router);
 
 app.get("/", (req, res) => {
   res.send("Hello World");
