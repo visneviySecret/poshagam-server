@@ -12,19 +12,20 @@ class AddressService {
     const user = await db.query(`SELECT * FROM "user" WHERE id = $1`, [
       Number(user_id),
     ]);
+
     if (!user.rows.length) {
       throw new Error("User not found");
     }
     const candidate = await db.query(
-      `SELECT * FROM address WHERE user_id = $1`,
-      [user_id]
+      `SELECT * FROM address WHERE user_id = $1 AND city = $2 AND street = $3 AND index = $4 AND phone = $5`,
+      [user_id, city, street, Number(index), phone]
     );
     if (candidate.rows.length) {
       throw new Error("Address already exists");
     }
     const newAddress = await db.query(
       `INSERT INTO address (user_id, city, street, index, phone) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [user.rows[0].id, city, street, index, phone]
+      [user.rows[0].id, city, street, Number(index), phone]
     );
     return newAddress.rows[0];
   }
