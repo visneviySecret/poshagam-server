@@ -10,7 +10,6 @@ class OrderController {
       }
 
       const order = await orderService.createOrder(userId, { items, status });
-      console.log("order", order);
       res.status(201).json(order);
     } catch (error) {
       res.status(400).json({ message: error.message });
@@ -54,7 +53,7 @@ class OrderController {
   async getMyOrders(req, res) {
     try {
       const userId = req.user.id;
-      const orders = await orderService.getOrdersByUser(userId);
+      const orders = await orderService.getOrderByUser(userId);
       res.status(200).json(orders);
     } catch (error) {
       res.status(400).json({ message: error.message });
@@ -67,6 +66,19 @@ class OrderController {
       const { status } = req.body;
       const order = await orderService.updateOrderStatus(Number(id), status);
       res.status(200).json(order);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  async deleteAll(req, res) {
+    try {
+      const userId = req.user.id;
+      const result = await orderService.deleteAllOrdersByUser(userId);
+      res.status(200).json({
+        message: `Deleted ${result.deletedCount} orders`,
+        deletedCount: result.deletedCount,
+      });
     } catch (error) {
       res.status(400).json({ message: error.message });
     }

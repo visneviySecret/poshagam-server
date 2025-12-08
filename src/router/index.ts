@@ -9,6 +9,6 @@ const router = Router();
 router.use("/users", UserRouter);
 router.use("/products", ProductRouter);
 router.use("/addresses", AddressRouter);
-router.use("/orders", OrderRouter);
+router.use("/order", OrderRouter);
 
 export default router;

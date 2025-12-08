@@ -46,7 +46,7 @@ class OrderRepository {
       `SELECT * FROM "order" WHERE user_id = $1 ORDER BY created_at DESC`,
       [userId]
     );
-    return result.rows;
+    return result.rows[0];
   }
 
   async getWithItems(orderId: number) {
@@ -66,11 +66,24 @@ class OrderRepository {
       [orderId]
     );
 
-    console.log("db result", { ...order.rows[0], items: items.rows });
-
     return { ...order.rows[0], items: items.rows };
+  }
+
+  async getAllOrderIdsByUser(client: any, userId: number) {
+    const result = await client.query(
+      `SELECT id FROM "order" WHERE user_id = $1`,
+      [userId]
+    );
+    return result.rows.map((row) => row.id);
+  }
+
+  async deleteAllByUser(userId: number) {
+    const result = await db.query(
+      `DELETE FROM "order" WHERE user_id = $1 RETURNING id`,
+      [userId]
+    );
+    return result.rows.map((row) => row.id);
   }
 }
 
 export default new OrderRepository();
-

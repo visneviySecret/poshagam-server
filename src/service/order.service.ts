@@ -148,15 +148,49 @@ class OrderService {
     return order;
   }
 
-  async getOrdersByUser(userId: number) {
-    const orders = await OrderRepository.findByUser(userId);
-    return Promise.all(
-      orders.map((order) => OrderRepository.getWithItems(order.id))
-    );
+  async getOrderByUser(userId: number) {
+    const order = await OrderRepository.findByUser(userId);
+    return OrderRepository.getWithItems(order.id);
   }
 
   async updateOrderStatus(orderId: number, status: string) {
     return OrderRepository.updateStatus(orderId, status);
+  }
+
+  async deleteAllOrdersByUser(userId: number) {
+    return this.withTransaction(async (client) => {
+      const orders = await client.query(
+        `SELECT id FROM "order" WHERE user_id = $1`,
+        [userId]
+      );
+
+      const orderIds = orders.rows.map((row) => row.id);
+
+      if (orderIds.length === 0) {
+        return { deletedCount: 0 };
+      }
+
+      for (const orderId of orderIds) {
+        const existingItems = await OrderItemRepository.getExistingItems(
+          client,
+          orderId
+        );
+
+        for (const item of existingItems) {
+          await ProductStockService.increaseStock(
+            client,
+            item.product_id,
+            item.quantity
+          );
+        }
+
+        await OrderItemRepository.deleteByOrderId(client, orderId);
+      }
+
+      await client.query(`DELETE FROM "order" WHERE user_id = $1`, [userId]);
+
+      return { deletedCount: orderIds.length };
+    });
   }
 }
 

@@ -40,4 +40,3 @@ class OrderItemRepository {
 }
 
 export default new OrderItemRepository();
-

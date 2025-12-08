@@ -20,4 +20,8 @@ router.patch("/:id/status", authMiddleware, (req, res) =>
   orderController.updateStatus(req, res)
 );
 
+router.delete("/", authMiddleware, (req, res) =>
+  orderController.deleteAll(req, res)
+);
+
 export default router;
