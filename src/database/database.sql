@@ -1,7 +1,8 @@
 CREATE TABLE "user"(
     id SERIAL PRIMARY KEY,
     email VARCHAR(255),
-    password VARCHAR(255)
+    password VARCHAR(255),
+    role VARCHAR(50) DEFAULT 'user'
 );
 
 CREATE TABLE token(
