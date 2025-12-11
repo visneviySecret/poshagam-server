@@ -72,6 +72,18 @@ class UserService {
     }
     return user.rows[0];
   }
+
+  async setRole(userId: string, role: "user" | "admin") {
+    const user = await db.query(
+      `UPDATE "user" SET role = $1 WHERE id = $2 RETURNING *`,
+      [role, userId]
+    );
+    console.log("user", user);
+    if (!user.rows.length) {
+      throw new Error("User not found");
+    }
+    return user.rows[0];
+  }
 }
 
 export default new UserService();

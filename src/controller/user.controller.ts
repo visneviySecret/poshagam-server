@@ -98,6 +98,17 @@ class UserController {
       res.status(404).json({ message: error.message });
     }
   }
+
+  async setRole(req, res) {
+    try {
+      console.log("setRole", req.body);
+      const { userId, role } = req.body;
+      const user = await UserService.setRole(userId, role);
+      res.status(200).json(user);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
 }
 
 export default new UserController();

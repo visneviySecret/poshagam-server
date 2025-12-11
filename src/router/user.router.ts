@@ -1,6 +1,6 @@
 import { Router } from "express";
-import UserController from "../controller/user.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
+import UserController from "../controller/user.controller";
 
 const router = Router();
 
@@ -10,5 +10,6 @@ router.post("/logout", UserController.logout);
 router.post("/refresh-token", UserController.refreshToken);
 router.get("/", UserController.getUsers);
 router.get("/me", authMiddleware, UserController.getMe);
+router.post("/set-role", authMiddleware, UserController.setRole);
 
 export default router;
