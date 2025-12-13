@@ -78,7 +78,6 @@ class UserService {
       `UPDATE "user" SET role = $1 WHERE id = $2 RETURNING *`,
       [role, userId]
     );
-    console.log("user", user);
     if (!user.rows.length) {
       throw new Error("User not found");
     }

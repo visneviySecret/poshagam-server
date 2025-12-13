@@ -15,6 +15,12 @@ class UserController {
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
       });
+      res.cookie("refreshToken", newUser.tokens.refreshToken, {
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
       res.status(201).json(newUser);
     } catch (error) {
       res.status(400).json({ message: error.message });
@@ -32,6 +38,12 @@ class UserController {
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
       });
+      res.cookie("refreshToken", user.tokens.refreshToken, {
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
       res.status(200).json(user);
     } catch (error) {
       res.status(400).json({ message: error.message });
@@ -45,6 +57,7 @@ class UserController {
         await UserService.logout(refreshToken);
       }
       res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
       res.status(200).json({ message: "Logged out" });
     } catch (error) {
       res.status(400).json({ message: error.message });
@@ -61,6 +74,12 @@ class UserController {
 
       res.cookie("accessToken", user.tokens.accessToken, {
         maxAge: 60 * 60 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
+      res.cookie("refreshToken", user.tokens.refreshToken, {
+        maxAge: 7 * 24 * 60 * 60 * 1000,
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",

@@ -6,12 +6,18 @@ const JWT_SECRET_REFRESH = process.env.JWT_SECRET_REFRESH;
 const EXPIRES_IN_ACCESS = "1h";
 const EXPIRES_IN_REFRESH = "7d";
 
+if (!JWT_SECRET_ACCESS || !JWT_SECRET_REFRESH) {
+  throw new Error(
+    "JWT_SECRET_ACCESS and JWT_SECRET_REFRESH must be set in environment variables"
+  );
+}
+
 class TokenService {
   generateToken(payload: any) {
-    const accessToken = jwt.sign(payload, JWT_SECRET_ACCESS, {
+    const accessToken = jwt.sign(payload, JWT_SECRET_ACCESS!, {
       expiresIn: EXPIRES_IN_ACCESS,
     });
-    const refreshToken = jwt.sign(payload, JWT_SECRET_REFRESH, {
+    const refreshToken = jwt.sign(payload, JWT_SECRET_REFRESH!, {
       expiresIn: EXPIRES_IN_REFRESH,
     });
     return { accessToken, refreshToken };
@@ -47,10 +53,10 @@ class TokenService {
     return token.rows[0];
   }
   async verifyAccessToken(token: string) {
-    return jwt.verify(token, JWT_SECRET_ACCESS);
+    return jwt.verify(token, JWT_SECRET_ACCESS!);
   }
   async verifyRefreshToken(token: string) {
-    return jwt.verify(token, JWT_SECRET_REFRESH);
+    return jwt.verify(token, JWT_SECRET_REFRESH!);
   }
 }
 
