@@ -45,12 +45,6 @@ class OrderService {
         item.count,
         itemPrice
       );
-
-      await ProductStockService.decreaseStock(
-        client,
-        item.product_id,
-        item.count
-      );
     }
 
     return totalAmount;
@@ -110,19 +104,6 @@ class OrderService {
         throw new Error(`Cannot update order with status: ${order.status}`);
       }
 
-      const existingItems = await OrderItemRepository.getExistingItems(
-        client,
-        orderId
-      );
-
-      for (const item of existingItems) {
-        await ProductStockService.increaseStock(
-          client,
-          item.product_id,
-          item.quantity
-        );
-      }
-
       await OrderItemRepository.deleteByOrderId(client, orderId);
 
       const totalAmount = await this.processOrderItems(
@@ -171,19 +152,6 @@ class OrderService {
       }
 
       for (const orderId of orderIds) {
-        const existingItems = await OrderItemRepository.getExistingItems(
-          client,
-          orderId
-        );
-
-        for (const item of existingItems) {
-          await ProductStockService.increaseStock(
-            client,
-            item.product_id,
-            item.quantity
-          );
-        }
-
         await OrderItemRepository.deleteByOrderId(client, orderId);
       }
 

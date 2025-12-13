@@ -1,5 +1,3 @@
-import db from "../database/database";
-
 class ProductStockService {
   async validateAndGetProduct(
     client: any,
