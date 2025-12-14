@@ -1,4 +1,5 @@
 import db from "../database/database";
+import S3Service from "./s3.service";
 
 interface Product {
   name: string;
@@ -23,8 +24,21 @@ class ProductService {
     return newProduct.rows[0];
   }
   async getProducts() {
-    const products = await db.query(`SELECT * FROM product`);
-    return products.rows;
+    const products = await db.query(
+      `SELECT id, name, price, description, photo, remaining FROM product`
+    );
+
+    const productsWithUrls = await Promise.all(
+      products.rows.map(async (product) => {
+        if (product.photo && product.photo.includes(".blob")) {
+          const photoUrl = await S3Service.getFileUrl(product.photo);
+          return { ...product, photo: photoUrl };
+        }
+        return product;
+      })
+    );
+
+    return productsWithUrls;
   }
 }
 

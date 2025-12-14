@@ -1,10 +1,32 @@
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  PutObjectCommand,
+  CreateBucketCommand,
+  HeadBucketCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3 } from "../s3Client.ts/s3Client";
 import { randomUUID } from "crypto";
 
 class S3Service {
   private readonly BUCKET_NAME =
     process.env.S3_BUCKET_NAME || "mini-market-bucket";
+
+  async initializeBucket(): Promise<void> {
+    try {
+      await s3.send(new HeadBucketCommand({ Bucket: this.BUCKET_NAME }));
+    } catch (error: any) {
+      if (error.$metadata?.httpStatusCode === 404) {
+        await s3.send(
+          new CreateBucketCommand({
+            Bucket: this.BUCKET_NAME,
+          })
+        );
+      } else {
+        throw error;
+      }
+    }
+  }
 
   async uploadFile(file: Express.Multer.File): Promise<string> {
     const fileExtension = file.originalname.split(".").pop();
@@ -19,10 +41,20 @@ class S3Service {
 
     await s3.send(command);
 
-    const fileUrl = `${process.env.S3_URL || "http://localhost:4566"}/${
-      this.BUCKET_NAME
-    }/${key}`;
-    return fileUrl;
+    return key;
+  }
+
+  async getFileUrl(key: string): Promise<string> {
+    const getObjectCommand = new GetObjectCommand({
+      Bucket: this.BUCKET_NAME,
+      Key: key,
+    });
+
+    const presignedUrl = await getSignedUrl(s3, getObjectCommand, {
+      expiresIn: 7 * 24 * 60 * 60,
+    });
+
+    return presignedUrl;
   }
 }
 
