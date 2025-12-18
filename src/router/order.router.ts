@@ -4,7 +4,7 @@ import { authMiddleware } from "../middleware/auth.middleware";
 
 const router = Router();
 
-router.post("/", authMiddleware, (req, res) =>
+router.post("/create", authMiddleware, (req, res) =>
   orderController.create(req, res)
 );
 router.put("/:id", authMiddleware, (req, res) =>

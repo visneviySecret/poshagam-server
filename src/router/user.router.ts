@@ -7,7 +7,7 @@ const router = Router();
 router.post("/signup", UserController.signup);
 router.post("/login", UserController.login);
 router.post("/logout", UserController.logout);
-router.post("/refresh-token", UserController.refreshToken);
+router.get("/refresh-token", UserController.refreshToken);
 router.get("/", UserController.getUsers);
 router.get("/me", authMiddleware, UserController.getMe);
 router.post("/set-role", authMiddleware, UserController.setRole);

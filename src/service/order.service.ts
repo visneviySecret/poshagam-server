@@ -131,6 +131,9 @@ class OrderService {
 
   async getOrderByUser(userId: number) {
     const order = await OrderRepository.findByUser(userId);
+    if (!order) {
+      return null;
+    }
     return OrderRepository.getWithItems(order.id);
   }
 
