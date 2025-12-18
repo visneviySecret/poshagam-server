@@ -31,10 +31,11 @@ CREATE TABLE product(
     name VARCHAR(255),
     price DECIMAL(10, 2),
     description VARCHAR(255),
-    photo VARCHAR(255),
+    images VARCHAR(255),
     category_id INTEGER,
     FOREIGN KEY (category_id) REFERENCES category(id),
-    status VARCHAR(255),
+    preview VARCHAR(255),
+    instruction VARCHAR(255)
 );
 
 CREATE TABLE review(

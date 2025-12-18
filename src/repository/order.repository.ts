@@ -59,7 +59,7 @@ class OrderRepository {
     }
 
     const items = await db.query(
-      `SELECT oi.product_id as id, oi.quantity, oi.price, p.name as product_name, p.photo as product_photo
+      `SELECT oi.product_id as id, oi.quantity, oi.price, p.name as product_name, p.images as product_images
        FROM order_item oi
        JOIN product p ON oi.product_id = p.id
        WHERE oi.order_id = $1`,

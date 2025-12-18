@@ -4,22 +4,48 @@ import S3Service from "../service/s3.service";
 class ProductController {
   async createProduct(req, res) {
     try {
-      const { name, price, description } = req.body;
-      let photoUrl = "";
+      const { name, price, description, category } = req.body;
+      let imagesUrl: string[] = [];
+      let previewUrl: string = "";
+      let instructionUrl: string = "";
 
-      if (req.file) {
-        photoUrl = await S3Service.uploadFile(req.file);
+      if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+        const imageFiles = [];
+        let previewFile: Express.Multer.File;
+        let instructionFile: Express.Multer.File;
+        req.files.forEach((file: Express.Multer.File) => {
+          if (file.fieldname.includes("images")) {
+            imageFiles.push(file);
+          }
+          if (file.fieldname.includes("preview")) {
+            previewFile = file;
+          }
+          if (file.fieldname.includes("instruction")) {
+            instructionFile = file;
+          }
+        });
+        imagesUrl = await Promise.all(
+          imageFiles.map(async (file: Express.Multer.File) => {
+            return await S3Service.uploadFile(file);
+          })
+        );
+        previewUrl = await S3Service.uploadFile(previewFile);
+        instructionUrl = await S3Service.uploadFile(instructionFile);
       }
 
       const product = await productService.createProduct({
         name,
-        price: parseFloat(price),
         description,
-        photo: photoUrl,
+        price: parseFloat(price),
+        category: parseInt(category),
+        images: imagesUrl,
+        preview: previewUrl,
+        instruction: instructionUrl,
       });
 
       res.status(201).json(product);
     } catch (error) {
+      console.error("Error creating product:", error);
       res.status(400).json({ message: error.message });
     }
   }

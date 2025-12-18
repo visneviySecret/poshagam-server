@@ -4,7 +4,7 @@ import { upload } from "../middleware/upload.middleware";
 
 const router = Router();
 
-router.post("/", upload.single("photo"), productController.createProduct);
+router.post("/create", upload.any(), productController.createProduct);
 router.get("/", productController.getProducts);
 
 export default router;

@@ -14,6 +14,10 @@ DROP TABLE IF EXISTS "user" CASCADE;
 DROP TABLE IF EXISTS token CASCADE;
 `;
 
+const queryInitTables = `
+INSERT INTO category (name) VALUES ('Lego WeDo')
+`;
+
 const queryCreateTables = readFileSync(
   join(__dirname, "database.sql"),
   "utf-8"
@@ -27,9 +31,13 @@ pool
   })
   .then(() => {
     console.log("Tables created successfully");
+    return pool.query(queryInitTables);
+  })
+  .then(() => {
+    console.log("Category 'Lego WeDo' created successfully");
     process.exit(0);
   })
   .catch((err) => {
-    console.error("Error dropping tables:", err);
+    console.error("Error initializing database:", err);
     process.exit(1);
   });

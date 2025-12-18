@@ -9,8 +9,7 @@
     "dev": "npm run docker:up && nodemon --exec ts-node ./src/index.ts",
     "prestart": "npm run build",
     "docker:up": "docker-compose up -d",
-    "db:init": "ts-node ./src/database/init.ts",
-    "db:migrate:role": "ts-node ./src/database/migrations/add-role-to-user.ts"
+    "db:init": "ts-node ./src/database/init.ts"
   },
   "keywords": [],
   "author": "",
