@@ -35,7 +35,6 @@ CREATE TABLE product(
     category_id INTEGER,
     FOREIGN KEY (category_id) REFERENCES category(id),
     status VARCHAR(255),
-    remaining INTEGER
 );
 
 CREATE TABLE review(

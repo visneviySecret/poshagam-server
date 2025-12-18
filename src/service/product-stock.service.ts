@@ -12,27 +12,7 @@ class ProductStockService {
       throw new Error(`Product with id ${productId} not found`);
     }
 
-    if (product.rows[0].remaining < quantity) {
-      throw new Error(
-        `Insufficient stock for product ${productId}. Available: ${product.rows[0].remaining}, Requested: ${quantity}`
-      );
-    }
-
     return product.rows[0];
-  }
-
-  async decreaseStock(client: any, productId: number, quantity: number) {
-    await client.query(
-      `UPDATE product SET remaining = remaining - $1 WHERE id = $2`,
-      [quantity, productId]
-    );
-  }
-
-  async increaseStock(client: any, productId: number, quantity: number) {
-    await client.query(
-      `UPDATE product SET remaining = remaining + $1 WHERE id = $2`,
-      [quantity, productId]
-    );
   }
 }
 

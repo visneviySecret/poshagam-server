@@ -4,7 +4,7 @@ import S3Service from "../service/s3.service";
 class ProductController {
   async createProduct(req, res) {
     try {
-      const { name, price, description, remaining } = req.body;
+      const { name, price, description } = req.body;
       let photoUrl = "";
 
       if (req.file) {
@@ -16,7 +16,6 @@ class ProductController {
         price: parseFloat(price),
         description,
         photo: photoUrl,
-        remaining: parseInt(remaining),
       });
 
       res.status(201).json(product);
