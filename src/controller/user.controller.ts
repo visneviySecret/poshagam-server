@@ -112,7 +112,9 @@ class UserController {
       }
       const user = await UserService.getMe(decoded.id);
       const userAddresses = await AddressService.getAddressesByUser(decoded.id);
-      res.status(200).json({ ...user, addresses: userAddresses });
+      res
+        .status(200)
+        .json({ ...user, addresses: userAddresses, password: undefined });
     } catch (error) {
       res.status(404).json({ message: error.message });
     }

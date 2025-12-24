@@ -1,7 +1,8 @@
+import { Pool, PoolClient } from "pg";
 import db from "../database/database";
 
 class OrderRepository {
-  async create(client: any, userId: number, status: string) {
+  async create(client: PoolClient, userId: number, status: string) {
     const result = await client.query(
       `INSERT INTO "order" (user_id, status, amount) 
        VALUES ($1, $2, 0) RETURNING *`,
@@ -10,14 +11,18 @@ class OrderRepository {
     return result.rows[0];
   }
 
-  async findById(client: any, orderId: number) {
+  async findById(client: PoolClient, orderId: number) {
     const result = await client.query(`SELECT * FROM "order" WHERE id = $1`, [
       orderId,
     ]);
     return result.rows[0];
   }
 
-  async findByIdAndUser(client: any, orderId: number, userId: number) {
+  async findByIdAndUser(
+    client: PoolClient | Pool,
+    orderId: number,
+    userId: number
+  ) {
     const result = await client.query(
       `SELECT * FROM "order" WHERE id = $1 AND user_id = $2`,
       [orderId, userId]
@@ -25,7 +30,7 @@ class OrderRepository {
     return result.rows[0];
   }
 
-  async updateAmount(client: any, orderId: number, amount: number) {
+  async updateAmount(client: PoolClient, orderId: number, amount: number) {
     await client.query(`UPDATE "order" SET amount = $1 WHERE id = $2`, [
       amount,
       orderId,
@@ -49,27 +54,31 @@ class OrderRepository {
     return result.rows[0];
   }
 
-  async getWithItems(orderId: number) {
-    const order = await db.query(`SELECT * FROM "order" WHERE id = $1`, [
-      orderId,
+  async getWithItems(orderId: number, clientOrOrderId?: PoolClient) {
+    const isClient = orderId !== undefined;
+    const client = isClient ? clientOrOrderId : db;
+    const id = isClient ? orderId : clientOrOrderId;
+
+    const order = await client.query(`SELECT * FROM "order" WHERE id = $1`, [
+      id,
     ]);
 
     if (!order.rows.length) {
       return null;
     }
 
-    const items = await db.query(
+    const items = await client.query(
       `SELECT oi.product_id as id, oi.quantity, oi.price, p.name as product_name, p.images as product_images
        FROM order_item oi
        JOIN product p ON oi.product_id = p.id
        WHERE oi.order_id = $1`,
-      [orderId]
+      [id]
     );
 
     return { ...order.rows[0], items: items.rows };
   }
 
-  async getAllOrderIdsByUser(client: any, userId: number) {
+  async getAllOrderIdsByUser(client: PoolClient, userId: number) {
     const result = await client.query(
       `SELECT id FROM "order" WHERE user_id = $1`,
       [userId]

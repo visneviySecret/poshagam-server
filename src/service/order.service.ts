@@ -2,10 +2,11 @@ import db from "../database/database";
 import OrderRepository from "../repository/order.repository";
 import OrderItemRepository from "../repository/order-item.repository";
 import ProductStockService from "./product-stock.service";
+import { PoolClient } from "pg";
 
 class OrderService {
   private async withTransaction<T>(
-    callback: (client: any) => Promise<T>
+    callback: (client: PoolClient) => Promise<T>
   ): Promise<T> {
     const client = await db.connect();
     try {
@@ -76,9 +77,7 @@ class OrderService {
 
       await OrderRepository.updateAmount(client, order.id, totalAmount);
 
-      // TODO: здесь должен возвращаться order_id
-      console.log("order");
-      return await OrderRepository.getWithItems(order.id);
+      return await OrderRepository.getWithItems(order.id, client);
     });
   }
 
