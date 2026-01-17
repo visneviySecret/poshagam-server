@@ -3,3 +3,4 @@ node_modules
 dist
 minio-data/
 postgres-data/
+googleusercontent.json
