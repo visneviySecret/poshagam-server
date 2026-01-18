@@ -45,9 +45,11 @@ const startServer = async () => {
         throw new Error("Failed to load HTTPS options");
       }
 
-      https.createServer(httpsOptions, app).listen(sslConfig.httpsPort, () => {
-        console.log(`HTTPS server is running on port ${sslConfig.httpsPort}`);
-      });
+      https
+        .createServer(httpsOptions, app)
+        .listen(sslConfig.httpsPort, "0.0.0.0", () => {
+          console.log(`HTTPS server is running on port ${sslConfig.httpsPort}`);
+        });
 
       http
         .createServer((req, res) => {
