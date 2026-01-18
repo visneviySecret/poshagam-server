@@ -31,9 +31,8 @@ class OrderService {
 
     for (const item of items) {
       const product = await ProductStockService.validateAndGetProduct(
-        client,
         item.product_id,
-        item.count
+        client
       );
 
       const itemPrice = item.price || product.price;

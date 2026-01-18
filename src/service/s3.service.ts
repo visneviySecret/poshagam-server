@@ -56,6 +56,23 @@ class S3Service {
 
     return presignedUrl;
   }
+
+  async getFileBuffer(key: string): Promise<Buffer> {
+    const getObjectCommand = new GetObjectCommand({
+      Bucket: this.BUCKET_NAME,
+      Key: key,
+    });
+
+    const response = await s3.send(getObjectCommand);
+    const stream = response.Body as any;
+
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+
+    return Buffer.concat(chunks);
+  }
 }
 
 export default new S3Service();

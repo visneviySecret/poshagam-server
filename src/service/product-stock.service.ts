@@ -1,9 +1,13 @@
+import { Product } from "../types/global";
+import db from "../database/database";
+import { PoolClient, Pool } from "pg";
+
 class ProductStockService {
   async validateAndGetProduct(
-    client: any,
     productId: number,
-    quantity: number
-  ) {
+    client?: PoolClient | Pool
+  ): Promise<Product> {
+    client = client || db;
     const product = await client.query(`SELECT * FROM product WHERE id = $1`, [
       productId,
     ]);
