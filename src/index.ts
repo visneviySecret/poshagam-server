@@ -11,6 +11,7 @@ import {
   validateSSLConfig,
   getHTTPSOptions,
 } from "./config/ssl.config";
+import { createProxyMiddleware } from "http-proxy-middleware";
 
 dotenv.config({ quiet: true });
 
@@ -27,9 +28,16 @@ app.use(
 );
 app.use("/api", router);
 
-app.get("/", (req, res) => {
-  res.send("Hello World");
+const clientProxy = createProxyMiddleware({
+  target: "http://localhost:3000",
+  changeOrigin: true,
+  ws: true,
+  pathFilter: (pathname) => {
+    return !pathname.startsWith("/api");
+  },
 });
+
+app.use("/api", clientProxy);
 
 const startServer = async () => {
   try {
