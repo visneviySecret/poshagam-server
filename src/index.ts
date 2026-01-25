@@ -33,6 +33,7 @@ app.use(
     target: "http://localhost:3000",
     changeOrigin: true,
     ws: true,
+    pathFilter: (pathname) => !pathname.startsWith("/api"),
   })
 );
 
