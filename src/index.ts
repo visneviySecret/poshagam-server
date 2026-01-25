@@ -28,16 +28,13 @@ app.use(
 );
 app.use("/api", router);
 
-const clientProxy = createProxyMiddleware({
-  target: "http://localhost:3000",
-  changeOrigin: true,
-  ws: true,
-  pathFilter: (pathname) => {
-    return !pathname.startsWith("/api");
-  },
-});
-
-app.use("/api", clientProxy);
+app.use(
+  createProxyMiddleware({
+    target: "http://localhost:3000",
+    changeOrigin: true,
+    ws: true,
+  })
+);
 
 const startServer = async () => {
   try {
