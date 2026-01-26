@@ -54,10 +54,9 @@ class OrderRepository {
     return result.rows[0];
   }
 
-  async getWithItems(orderId: number, clientOrOrderId?: PoolClient) {
-    const isClient = orderId !== undefined;
-    const client = isClient ? clientOrOrderId : db;
-    const id = isClient ? orderId : clientOrOrderId;
+  async getWithItems(id: number, clientProp?: PoolClient) {
+    const isClient = clientProp !== undefined;
+    const client = isClient ? clientProp : db;
 
     const order = await client.query(`SELECT * FROM "order" WHERE id = $1`, [
       id,
