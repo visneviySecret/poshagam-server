@@ -54,6 +54,14 @@ class S3Service {
       expiresIn: 7 * 24 * 60 * 60,
     });
 
+    const publicEndpoint = process.env.S3_PUBLIC_ENDPOINT;
+    if (publicEndpoint) {
+      return presignedUrl.replace(
+        /^https?:\/\/[^\/]+/,
+        publicEndpoint.replace(/\/$/, "")
+      );
+    }
+
     return presignedUrl;
   }
 
