@@ -1,10 +1,16 @@
 import { Router } from "express";
 import productController from "../controller/product.controller";
 import { upload } from "../middleware/upload.middleware";
+import { authMiddleware } from "../middleware/auth.middleware";
 
 const router = Router();
 
-router.post("/create", upload.any(), productController.createProduct);
+router.post(
+  "/create",
+  authMiddleware,
+  upload.any(),
+  productController.createProduct
+);
 router.get("/", productController.getProducts);
 
 export default router;

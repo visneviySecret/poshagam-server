@@ -8,6 +8,7 @@ class ProductController {
       let imagesUrl: string[] = [];
       let previewUrl: string = "";
       let instructionUrl: string = "";
+      const userId = req.user.id;
 
       if (req.files && Array.isArray(req.files) && req.files.length > 0) {
         const imageFiles = [];
@@ -41,6 +42,7 @@ class ProductController {
         images: imagesUrl,
         preview: previewUrl,
         instruction: instructionUrl,
+        owner: userId,
       });
 
       res.status(201).json(product);

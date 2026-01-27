@@ -9,14 +9,15 @@ interface Product {
   images: string[];
   preview: string;
   instruction: string;
+  owner: number;
 }
 
 class ProductService {
   async createProduct(product: Product) {
     const imagesJson = JSON.stringify(product.images);
     const newProduct = await db.query(
-      `INSERT INTO product (name, price, description, images, category_id, preview, instruction) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      `INSERT INTO product (name, price, description, images, category_id, preview, instruction, owner) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
       [
         product.name,
         product.price,
@@ -25,6 +26,7 @@ class ProductService {
         product.category,
         product.preview,
         product.instruction,
+        product.owner,
       ]
     );
     return newProduct.rows[0];

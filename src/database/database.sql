@@ -35,7 +35,9 @@ CREATE TABLE product(
     category_id INTEGER,
     FOREIGN KEY (category_id) REFERENCES category(id),
     preview VARCHAR(255),
-    instruction VARCHAR(255)
+    instruction VARCHAR(255),
+    owner INTEGER,
+    FOREIGN KEY (owner) REFERENCES user(id)
 );
 
 CREATE TABLE review(
