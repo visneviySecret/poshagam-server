@@ -39,7 +39,14 @@ app.use(
 
 const startServer = async () => {
   try {
-    await S3Service.initializeBucket();
+    try {
+      await S3Service.initializeBucket();
+    } catch (s3Error) {
+      console.error("S3 initialization failed:", s3Error);
+      console.warn(
+        "Server will start without S3. File operations will fail until S3 is available."
+      );
+    }
 
     const sslConfig = getSSLConfig();
     validateSSLConfig(sslConfig);
