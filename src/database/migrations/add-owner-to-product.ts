@@ -4,7 +4,7 @@ const addOwner = async () => {
   try {
     await db.query(`
       ALTER TABLE "product" 
-      ADD COLUMN IF NOT EXISTS owner INTEGER 
+      ADD COLUMN IF NOT EXISTS owner INTEGER DEFAULT 1
     `);
     console.log("Owner column added successfully");
     process.exit(0);
