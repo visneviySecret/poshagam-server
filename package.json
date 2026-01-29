@@ -11,7 +11,8 @@
     "prestart": "npm run build",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "db:init": "ts-node ./src/database/init.ts"
+    "db:init": "ts-node ./src/database/init.ts",
+    "db:migrate": "ts-node ./src/database/migrate.ts"
   },
   "keywords": [],
   "author": "",
