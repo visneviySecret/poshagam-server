@@ -26,7 +26,7 @@ jobs:
         run: npm run build
 
       - name: Deploy to server
-        if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) || github.event_name == 'workflow_dispatch'
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEPLOY_HOST }}
@@ -36,7 +36,7 @@ jobs:
           script: |
             set -e
             cd ${{ secrets.DEPLOY_PATH }}
-            git pull origin main
+            git pull origin master
             npm ci
             npm run build
             pm2 restart ${{ secrets.PM2_APP_NAME || 'poshagam' }} --update-env || pm2 start dist/index.js --name ${{ secrets.PM2_APP_NAME || 'poshagam' }}
