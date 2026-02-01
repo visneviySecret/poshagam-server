@@ -25,44 +25,18 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Setup SSH agent
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
-
-      - name: Verify SSH key
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
-        run: ssh-add -l
-
-      - name: Debug node_modules/.bin
-        run: ls -la node_modules/.bin/ | grep tsc && which tsc || echo "tsc not in PATH"
-      - name: Test tsc
-        run: npx tsc --version
-
       - name: Deploy to server
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || 22 }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          PM2_APP_NAME: ${{ secrets.PM2_APP_NAME || 'poshagam' }}
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -p "$DEPLOY_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
-          ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "
+        if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) || github.event_name == 'workflow_dispatch'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script: |
             set -e
-            cd '$DEPLOY_PATH' || { echo 'Path not found'; exit 1; }
-            git pull origin master || { echo 'Git pull failed'; exit 1; }
-            npm ci --production
+            cd ${{ secrets.DEPLOY_PATH }}
+            git pull origin main
+            npm ci
             npm run build
-            if pm2 describe '$PM2_APP_NAME' > /dev/null 2>&1; then
-              pm2 reload '$PM2_APP_NAME' --update-env
-              echo 'Reloaded PM2 app'
-            else
-              pm2 start dist/index.js --name '$PM2_APP_NAME'
-              echo 'Started new PM2 app'
-            fi
-            pm2 save
-          "
+            pm2 restart ${{ secrets.PM2_APP_NAME || 'poshagam' }} --update-env || pm2 start dist/index.js --name ${{ secrets.PM2_APP_NAME || 'poshagam' }}
