@@ -13,5 +13,6 @@ router.post(
 );
 router.get("/", productController.getProducts);
 router.get("/owner", authMiddleware, productController.getProductsByOwner);
+router.delete("/:id", authMiddleware, productController.deleteProduct);
 
 export default router;

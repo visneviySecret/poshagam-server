@@ -79,6 +79,14 @@ class ProductService {
 
     return productsWithUrls;
   }
+
+  async deleteProductById(id) {
+    const products = await db.query(
+      "DELETE FROM product WHERE id = $1 RETURNING *",
+      [id]
+    );
+    return products.rows;
+  }
 }
 
 export default new ProductService();
