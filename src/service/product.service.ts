@@ -37,8 +37,20 @@ class ProductService {
       `SELECT id, name, price, description, images, category_id, preview FROM product`
     );
 
+    return await this.appendImagesToProducts(products.rows);
+  }
+
+  async getOwnerProducts(owner: string) {
+    const products = await db.query(
+      `SELECT id, name, price, description, images, category_id, preview FROM product WHERE owner = $1`,
+      [owner]
+    );
+    return await this.appendImagesToProducts(products.rows);
+  }
+
+  async appendImagesToProducts(products) {
     const productsWithUrls = await Promise.all(
-      products.rows.map(async (product) => {
+      products.map(async (product) => {
         let parsedImages = [];
         try {
           parsedImages = JSON.parse(product.images || "[]");

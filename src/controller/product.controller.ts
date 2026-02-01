@@ -60,6 +60,16 @@ class ProductController {
       res.status(400).json({ message: error.message });
     }
   }
+
+  async getProductsByOwner(req, res) {
+    try {
+      const owner = req.user.id;
+      const products = await productService.getOwnerProducts(owner);
+      res.status(200).json(products);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
 }
 
 export default new ProductController();

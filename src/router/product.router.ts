@@ -12,5 +12,6 @@ router.post(
   productController.createProduct
 );
 router.get("/", productController.getProducts);
+router.get("/owner", authMiddleware, productController.getProductsByOwner);
 
 export default router;
