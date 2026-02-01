@@ -46,4 +46,18 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p "$DEPLOY_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
-          ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "set -e && cd $DEPLOY_PATH && git pull origin master && npm ci && npm run build && (pm2 restart $PM2_APP_NAME --update-env || pm2 start dist/index.js --name $PM2_APP_NAME)"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "
+            set -e
+            cd '$DEPLOY_PATH' || { echo 'Path not found'; exit 1; }
+            git pull origin master || { echo 'Git pull failed'; exit 1; }
+            npm ci --production
+            npm run build
+            if pm2 describe '$PM2_APP_NAME' > /dev/null 2>&1; then
+              pm2 reload '$PM2_APP_NAME' --update-env
+              echo 'Reloaded PM2 app'
+            else
+              pm2 start dist/index.js --name '$PM2_APP_NAME'
+              echo 'Started new PM2 app'
+            fi
+            pm2 save
+          "
