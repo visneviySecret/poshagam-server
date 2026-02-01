@@ -31,6 +31,10 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
 
+      - name: Verify SSH key
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
+        run: ssh-add -l
+
       - name: Deploy to server
         if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
         env:
@@ -42,4 +46,4 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p "$DEPLOY_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
-          ssh -o StrictHostKeyChecking=accept-new -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "set -e && cd $DEPLOY_PATH && git pull origin master && npm ci && npm run build && (pm2 restart $PM2_APP_NAME --update-env || pm2 start dist/index.js --name $PM2_APP_NAME)"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "set -e && cd $DEPLOY_PATH && git pull origin master && npm ci && npm run build && (pm2 restart $PM2_APP_NAME --update-env || pm2 start dist/index.js --name $PM2_APP_NAME)"
