@@ -35,6 +35,11 @@ jobs:
         if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
         run: ssh-add -l
 
+      - name: Debug node_modules/.bin
+        run: ls -la node_modules/.bin/ | grep tsc && which tsc || echo "tsc not in PATH"
+      - name: Test tsc
+        run: npx tsc --version
+
       - name: Deploy to server
         if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
         env:
