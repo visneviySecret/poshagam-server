@@ -30,12 +30,6 @@ jobs:
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
-      - name: Debug SSH agent
-        run: |
-          ssh-add -l
-          echo "Port: '$DEPLOY_PORT'"  # Проверим порт
-          ssh-keyscan -H "$DEPLOY_HOST" -p "$DEPLOY_PORT" >> ~/.ssh/known_hosts  # Если port non-22
-          ssh -v -o StrictHostKeyChecking=no -o ConnectTimeout=10 -p "${DEPLOY_PORT:-22}" "$DEPLOY_USER@$DEPLOY_HOST" 'echo "SSH connected!"'
 
       - name: Deploy to server
         if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
