@@ -9,7 +9,7 @@ import S3ProxyRouter from "./s3-proxy.router";
 
 const router = Router();
 
-router.use("/s3-proxy", S3ProxyRouter);
+// router.use("/s3-proxy", S3ProxyRouter);
 router.use("/users", UserRouter);
 router.use("/products", ProductRouter);
 router.use("/addresses", AddressRouter);
