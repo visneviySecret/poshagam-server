@@ -40,6 +40,15 @@ class ProductService {
     return await this.appendImagesToProducts(products.rows);
   }
 
+  async getProductById(id: string) {
+    const products = await db.query(
+      `SELECT id, name, price, description, images, category_id, preview FROM product WHERE id = $1`,
+      [id]
+    );
+
+    return await this.appendImagesToProducts(products.rows);
+  }
+
   async getOwnerProducts(owner: string) {
     const products = await db.query(
       `SELECT id, name, price, description, images, category_id, preview FROM product WHERE owner = $1`,
@@ -84,6 +93,16 @@ class ProductService {
     const products = await db.query(
       "DELETE FROM product WHERE id = $1 RETURNING *",
       [id]
+    );
+    return products.rows;
+  }
+
+  async editProductById(id, setParts, values) {
+    const products = await db.query(
+      `UPDATE products SET ${setParts.join(
+        ", "
+      )} WHERE id = $${id} RETURNING *`,
+      [...values, id]
     );
     return products.rows;
   }

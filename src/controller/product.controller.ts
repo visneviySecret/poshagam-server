@@ -82,6 +82,46 @@ class ProductController {
       res.status(400).json({ message: error.message });
     }
   }
+
+  async getProductForEdit(req, res) {
+    try {
+      const { id } = req.params;
+      const ownerId = req.user.id;
+
+      const ownerProducts = await productService.getOwnerProducts(ownerId);
+      const isOwnerProduct = ownerProducts.some(
+        (product) => product.id === Number(id)
+      );
+
+      if (!isOwnerProduct) {
+        return res.status(403).json({ message: "Не ваш товар" });
+      }
+      const product = productService.getProductById(id);
+      res.status(200).json(product);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  async patchProduct(req, res) {
+    try {
+      const { id } = req.params;
+      const updates = await req.body;
+      const keys = Object.keys(updates);
+
+      const setParts = keys.map((key, i) => `"${key}" = $${i + 1}`);
+      const values = Object.values(updates);
+
+      const products = await productService.editProductById(
+        id,
+        setParts,
+        values
+      );
+      res.status(200).json({ message: "Successfully edit: " + id, products });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
 }
 
 export default new ProductController();
