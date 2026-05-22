@@ -64,18 +64,18 @@ const startServer = async () => {
           console.log(`HTTPS server is running on port ${sslConfig.httpsPort}`);
         });
 
-      http
-        .createServer((req, res) => {
-          res.writeHead(301, {
-            Location: "https://" + req.headers.host + req.url,
-          });
-          res.end();
-        })
-        .listen(sslConfig.httpPort, () => {
-          console.log(
-            `HTTP redirect server is running on port ${sslConfig.httpPort}`
-          );
-        });
+      // http
+      //   .createServer((req, res) => {
+      //     res.writeHead(301, {
+      //       Location: "https://" + req.headers.host + req.url,
+      //     });
+      //     res.end();
+      //   })
+      //   .listen(sslConfig.httpPort, () => {
+      //     console.log(
+      //       `HTTP redirect server is running on port ${sslConfig.httpPort}`
+      //     );
+      //   });
     } else {
       app.listen(port, () => {
         console.log(`HTTP server is running on port ${port}`);
