@@ -26,6 +26,9 @@ app.use(
     origin: process.env.CLIENT_URL,
   })
 );
+app.get("/ping", (req, res) => {
+  res.json({ ok: true });
+});
 app.use("/api", router);
 
 app.use(
