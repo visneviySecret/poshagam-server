@@ -50,26 +50,9 @@ class S3Service {
       Key: key,
     });
 
-    const presignedUrl = await getSignedUrl(s3, getObjectCommand, {
+    return getSignedUrl(s3, getObjectCommand, {
       expiresIn: 7 * 24 * 60 * 60,
     });
-
-    const proxyBase = process.env.S3_PROXY_PUBLIC_URL;
-    if (proxyBase) {
-      const u = new URL(presignedUrl);
-      const query = u.search.slice(1);
-      return `${proxyBase.replace(/\/$/, "")}/${this.BUCKET_NAME}/${key}${query ? `?${query}` : ""}`;
-    }
-
-    const publicEndpoint = process.env.S3_PUBLIC_ENDPOINT;
-    if (publicEndpoint) {
-      return presignedUrl.replace(
-        /^https?:\/\/[^\/]+/,
-        publicEndpoint.replace(/\/$/, "")
-      );
-    }
-
-    return presignedUrl;
   }
 
   async getFileBuffer(key: string): Promise<Buffer> {
