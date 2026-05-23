@@ -1,17 +1,9 @@
 import express from "express";
-import https from "https";
-import http from "http";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import router from "./router";
 import S3Service from "./service/s3.service";
-import {
-  getSSLConfig,
-  validateSSLConfig,
-  getHTTPSOptions,
-} from "./config/ssl.config";
-import { createProxyMiddleware } from "http-proxy-middleware";
 
 dotenv.config({ quiet: true });
 
@@ -26,19 +18,8 @@ app.use(
     origin: process.env.CLIENT_URL,
   })
 );
-app.get("/ping", (req, res) => {
-  res.json({ ok: true });
-});
-app.use("/api", router);
 
-app.use(
-  createProxyMiddleware({
-    target: "http://localhost:3000",
-    changeOrigin: true,
-    ws: true,
-    pathFilter: (pathname) => !pathname.startsWith("/api"),
-  })
-);
+app.use("/api", router);
 
 const startServer = async () => {
   try {
@@ -51,39 +32,9 @@ const startServer = async () => {
       );
     }
 
-    const sslConfig = getSSLConfig();
-    validateSSLConfig(sslConfig);
-
-    if (sslConfig.enabled) {
-      const httpsOptions = getHTTPSOptions(sslConfig);
-
-      if (!httpsOptions) {
-        throw new Error("Failed to load HTTPS options");
-      }
-
-      https
-        .createServer(httpsOptions, app)
-        .listen(sslConfig.httpsPort, "0.0.0.0", () => {
-          console.log(`HTTPS server is running on port ${sslConfig.httpsPort}`);
-        });
-
-      // http
-      //   .createServer((req, res) => {
-      //     res.writeHead(301, {
-      //       Location: "https://" + req.headers.host + req.url,
-      //     });
-      //     res.end();
-      //   })
-      //   .listen(sslConfig.httpPort, () => {
-      //     console.log(
-      //       `HTTP redirect server is running on port ${sslConfig.httpPort}`
-      //     );
-      //   });
-    } else {
-      app.listen(port, () => {
-        console.log(`HTTP server is running on port ${port}`);
-      });
-    }
+    app.listen(port, () => {
+      console.log(`HTTP server is running on port ${port}`);
+    });
   } catch (error) {
     console.error("Server startup error:", error);
     process.exit(1);
