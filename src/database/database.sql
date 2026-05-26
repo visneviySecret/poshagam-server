@@ -52,7 +52,7 @@ CREATE TABLE review(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE "order"(
+CREATE TABLE cart(
     id SERIAL PRIMARY KEY,
     user_id INTEGER,
     FOREIGN KEY (user_id) REFERENCES "user"(id),
@@ -62,10 +62,10 @@ CREATE TABLE "order"(
     amount INTEGER
 );
 
-CREATE TABLE order_item(
+CREATE TABLE cart_item(
     id SERIAL PRIMARY KEY,
-    order_id INTEGER,
-    FOREIGN KEY (order_id) REFERENCES "order"(id),
+    cart_id INTEGER,
+    FOREIGN KEY (cart_id) REFERENCES cart(id),
     product_id INTEGER,
     FOREIGN KEY (product_id) REFERENCES product(id),
     quantity INTEGER,
@@ -75,8 +75,8 @@ CREATE TABLE order_item(
 
 CREATE TABLE payment(
     id SERIAL PRIMARY KEY,
-    order_id INTEGER,
-    FOREIGN KEY (order_id) REFERENCES "order"(id),
+    cart_id INTEGER,
+    FOREIGN KEY (cart_id) REFERENCES cart(id),
     payment_amount DECIMAL(10, 2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
