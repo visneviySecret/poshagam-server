@@ -79,7 +79,8 @@ class ProductController {
         .status(200)
         .json({ message: "Successfully deleted: " + id, products });
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      const status = error.statusCode || 400;
+      res.status(status).json({ message: error.message });
     }
   }
 

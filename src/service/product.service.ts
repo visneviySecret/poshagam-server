@@ -89,7 +89,55 @@ class ProductService {
     return productsWithUrls;
   }
 
+  collectProductFileKeys(product: {
+    images?: string | string[];
+    preview?: string;
+    instruction?: string;
+  }): string[] {
+    const keys: string[] = [];
+
+    if (product.preview) keys.push(product.preview);
+    if (product.instruction) keys.push(product.instruction);
+
+    let parsedImages: string[] = [];
+    if (typeof product.images === "string") {
+      try {
+        parsedImages = JSON.parse(product.images || "[]");
+      } catch {
+        parsedImages = [];
+      }
+    } else if (Array.isArray(product.images)) {
+      parsedImages = product.images;
+    }
+
+    if (Array.isArray(parsedImages)) {
+      keys.push(...parsedImages.filter(Boolean));
+    }
+
+    return Array.from(new Set(keys));
+  }
+
   async deleteProductById(id) {
+    const existing = await db.query("SELECT * FROM product WHERE id = $1", [id]);
+    if (existing.rows.length === 0) return [];
+
+    const inOrders = await db.query(
+      "SELECT 1 FROM order_item WHERE product_id = $1 LIMIT 1",
+      [id]
+    );
+    if (inOrders.rows.length > 0) {
+      const error = new Error(
+        "Товар нельзя удалить: он участвует в заказах"
+      ) as Error & { statusCode?: number };
+      error.statusCode = 409;
+      throw error;
+    }
+
+    await db.query("DELETE FROM review WHERE product_id = $1", [id]);
+    await S3Service.deleteFiles(
+      this.collectProductFileKeys(existing.rows[0])
+    );
+
     const products = await db.query(
       "DELETE FROM product WHERE id = $1 RETURNING *",
       [id]

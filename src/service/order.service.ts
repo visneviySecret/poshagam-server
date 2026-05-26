@@ -2,6 +2,7 @@ import db from "../database/database";
 import OrderRepository from "../repository/order.repository";
 import OrderItemRepository from "../repository/order-item.repository";
 import ProductStockService from "./product-stock.service";
+import S3Service from "./s3.service";
 import { PoolClient } from "pg";
 
 class OrderService {
@@ -20,6 +21,37 @@ class OrderService {
     } finally {
       client.release();
     }
+  }
+
+  private async enrichOrderItems(items: any[]) {
+    return Promise.all(
+      items.map(async (item) => {
+        let keys: string[] = [];
+        try {
+          keys = JSON.parse(item.product_images || "[]");
+        } catch {
+          keys = [];
+        }
+
+        const previewKey = keys[0];
+        const imageUrl = previewKey
+          ? await S3Service.getFileUrl(previewKey)
+          : null;
+
+        return {
+          ...item,
+          images: imageUrl ? [imageUrl] : [],
+        };
+      })
+    );
+  }
+
+  private async withEnrichedItems(order: any) {
+    if (!order?.items?.length) {
+      return order;
+    }
+    order.items = await this.enrichOrderItems(order.items);
+    return order;
   }
 
   private async processOrderItems(
@@ -76,7 +108,8 @@ class OrderService {
 
       await OrderRepository.updateAmount(client, order.id, totalAmount);
 
-      return await OrderRepository.getWithItems(order.id, client);
+      const result = await OrderRepository.getWithItems(order.id, client);
+      return this.withEnrichedItems(result);
     });
   }
 
@@ -115,7 +148,8 @@ class OrderService {
         [totalAmount, orderId]
       );
 
-      return await OrderRepository.getWithItems(orderId);
+      const result = await OrderRepository.getWithItems(orderId);
+      return this.withEnrichedItems(result);
     });
   }
 
@@ -124,7 +158,7 @@ class OrderService {
     if (!order) {
       throw new Error("Order not found");
     }
-    return order;
+    return this.withEnrichedItems(order);
   }
 
   async getOrderByUser(userId: number) {
@@ -132,7 +166,8 @@ class OrderService {
     if (!order) {
       return null;
     }
-    return OrderRepository.getWithItems(order.id);
+    const result = await OrderRepository.getWithItems(order.id);
+    return this.withEnrichedItems(result);
   }
 
   async updateOrderStatus(orderId: number, status: string) {

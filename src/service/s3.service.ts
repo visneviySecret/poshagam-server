@@ -3,6 +3,7 @@ import {
   CreateBucketCommand,
   HeadBucketCommand,
   GetObjectCommand,
+  DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3 } from "../s3Client.ts/s3Client";
@@ -53,6 +54,22 @@ class S3Service {
     return getSignedUrl(s3, getObjectCommand, {
       expiresIn: 7 * 24 * 60 * 60,
     });
+  }
+
+  async deleteFile(key: string): Promise<void> {
+    if (!key) return;
+
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: this.BUCKET_NAME,
+        Key: key,
+      })
+    );
+  }
+
+  async deleteFiles(keys: string[]): Promise<void> {
+    const uniqueKeys = Array.from(new Set(keys.filter(Boolean)));
+    await Promise.all(uniqueKeys.map((key) => this.deleteFile(key)));
   }
 
   async getFileBuffer(key: string): Promise<Buffer> {
