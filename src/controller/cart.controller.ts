@@ -1,6 +1,6 @@
-import orderService from "../service/order.service";
+import cartService from "../service/cart.service";
 
-class OrderController {
+class CartController {
   async create(req, res) {
     try {
       const userId = req.user.id;
@@ -9,8 +9,8 @@ class OrderController {
         return res.status(400).json({ message: "Items are required" });
       }
 
-      const order = await orderService.createOrder(userId, { items, status });
-      res.status(201).json(order);
+      const cart = await cartService.createCart(userId, { items, status });
+      res.status(201).json(cart);
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
@@ -22,10 +22,8 @@ class OrderController {
       const { id } = req.params;
       const { items } = req.body;
 
-      const order = await orderService.updateOrder(Number(id), userId, {
-        items,
-      });
-      res.status(200).json(order);
+      const cart = await cartService.updateCart(Number(id), userId, { items });
+      res.status(200).json(cart);
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
@@ -34,23 +32,23 @@ class OrderController {
   async getById(req, res) {
     try {
       const { id } = req.params;
-      const order = await orderService.getOrderById(Number(id));
+      const cart = await cartService.getCartById(Number(id));
 
-      if (order.user_id !== req.user.id) {
+      if (cart.user_id !== req.user.id) {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      res.status(200).json(order);
+      res.status(200).json(cart);
     } catch (error) {
       res.status(404).json({ message: error.message });
     }
   }
 
-  async getMyOrders(req, res) {
+  async getMyCart(req, res) {
     try {
       const userId = req.user.id;
-      const orders = await orderService.getOrderByUser(userId);
-      res.status(200).json(orders);
+      const cart = await cartService.getCartByUser(userId);
+      res.status(200).json(cart);
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
@@ -60,19 +58,19 @@ class OrderController {
     try {
       const { id } = req.params;
       const { status } = req.body;
-      const order = await orderService.updateOrderStatus(Number(id), status);
-      res.status(200).json(order);
+      const cart = await cartService.updateCartStatus(Number(id), status);
+      res.status(200).json(cart);
     } catch (error) {
       res.status(400).json({ message: error.message });
     }
   }
 
-  async deleteAll(req, res) {
+  async clear(req, res) {
     try {
       const userId = req.user.id;
-      const result = await orderService.deleteAllOrdersByUser(userId);
+      const result = await cartService.clearUserCarts(userId);
       res.status(200).json({
-        message: `Deleted ${result.deletedCount} orders`,
+        message: `Cleared ${result.deletedCount} cart`,
         deletedCount: result.deletedCount,
       });
     } catch (error) {
@@ -81,4 +79,4 @@ class OrderController {
   }
 }
 
-export default new OrderController();
+export default new CartController();

@@ -1,11 +1,11 @@
 import db from "../database/database";
-import OrderRepository from "../repository/order.repository";
-import OrderItemRepository from "../repository/order-item.repository";
+import CartRepository from "../repository/cart.repository";
+import CartItemRepository from "../repository/cart-item.repository";
 import ProductStockService from "./product-stock.service";
 import S3Service from "./s3.service";
 import { PoolClient } from "pg";
 
-class OrderService {
+class CartService {
   private async withTransaction<T>(
     callback: (client: PoolClient) => Promise<T>
   ): Promise<T> {
@@ -23,7 +23,7 @@ class OrderService {
     }
   }
 
-  private async enrichOrderItems(items: any[]) {
+  private async enrichCartItems(items: any[]) {
     return Promise.all(
       items.map(async (item) => {
         let keys: string[] = [];
@@ -46,17 +46,17 @@ class OrderService {
     );
   }
 
-  private async withEnrichedItems(order: any) {
-    if (!order?.items?.length) {
-      return order;
+  private async withEnrichedItems(cart: any) {
+    if (!cart?.items?.length) {
+      return cart;
     }
-    order.items = await this.enrichOrderItems(order.items);
-    return order;
+    cart.items = await this.enrichCartItems(cart.items);
+    return cart;
   }
 
-  private async processOrderItems(
+  private async processCartItems(
     client: any,
-    orderId: number,
+    cartId: number,
     items: Array<{ product_id: number; count: number; price?: number }>
   ) {
     let totalAmount = 0;
@@ -70,9 +70,9 @@ class OrderService {
       const itemPrice = item.price || product.price;
       totalAmount += itemPrice * item.count;
 
-      await OrderItemRepository.create(
+      await CartItemRepository.create(
         client,
-        orderId,
+        cartId,
         item.product_id,
         item.count,
         itemPrice
@@ -82,7 +82,7 @@ class OrderService {
     return totalAmount;
   }
 
-  async createOrder(
+  async createCart(
     userId: number,
     dto: {
       items: Array<{
@@ -94,108 +94,107 @@ class OrderService {
     }
   ) {
     return this.withTransaction(async (client) => {
-      const order = await OrderRepository.create(
+      const cart = await CartRepository.create(
         client,
         userId,
         dto.status || "pending"
       );
 
-      const totalAmount = await this.processOrderItems(
+      const totalAmount = await this.processCartItems(
         client,
-        order.id,
+        cart.id,
         dto.items
       );
 
-      await OrderRepository.updateAmount(client, order.id, totalAmount);
+      await CartRepository.updateAmount(client, cart.id, totalAmount);
 
-      const result = await OrderRepository.getWithItems(order.id, client);
+      const result = await CartRepository.getWithItems(cart.id, client);
       return this.withEnrichedItems(result);
     });
   }
 
-  async updateOrder(
-    orderId: number,
+  async updateCart(
+    cartId: number,
     userId: number,
     dto: {
       items: Array<{ product_id: number; count: number; price?: number }>;
     }
   ) {
     return this.withTransaction(async (client) => {
-      const order = await OrderRepository.findByIdAndUser(
-        client,
-        orderId,
-        userId
-      );
+      const cart = await CartRepository.findByIdAndUser(client, cartId, userId);
 
-      if (!order) {
-        throw new Error("Order not found or access denied");
+      if (!cart) {
+        throw new Error("Cart not found or access denied");
       }
 
-      if (order.status !== "pending") {
-        throw new Error(`Cannot update order with status: ${order.status}`);
+      if (cart.status !== "pending") {
+        throw new Error(`Cannot update cart with status: ${cart.status}`);
       }
 
-      await OrderItemRepository.deleteByOrderId(client, orderId);
+      await CartItemRepository.deleteByCartId(client, cartId);
 
-      const totalAmount = await this.processOrderItems(
+      const totalAmount = await this.processCartItems(
         client,
-        orderId,
+        cartId,
         dto.items
       );
 
       await client.query(
-        `UPDATE "order" SET amount = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
-        [totalAmount, orderId]
+        `UPDATE cart SET amount = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+        [totalAmount, cartId]
       );
 
-      const result = await OrderRepository.getWithItems(orderId);
+      const result = await CartRepository.getWithItems(cartId);
       return this.withEnrichedItems(result);
     });
   }
 
-  async getOrderById(orderId: number) {
-    const order = await OrderRepository.getWithItems(orderId);
-    if (!order) {
-      throw new Error("Order not found");
+  async getCartById(cartId: number) {
+    const cart = await CartRepository.getWithItems(cartId);
+    if (!cart) {
+      throw new Error("Cart not found");
     }
-    return this.withEnrichedItems(order);
+    return this.withEnrichedItems(cart);
   }
 
-  async getOrderByUser(userId: number) {
-    const order = await OrderRepository.findByUser(userId);
-    if (!order) {
+  async getCartByUser(userId: number) {
+    const cart = await CartRepository.findPendingByUser(userId);
+    if (!cart) {
       return null;
     }
-    const result = await OrderRepository.getWithItems(order.id);
+    const result = await CartRepository.getWithItems(cart.id);
     return this.withEnrichedItems(result);
   }
 
-  async updateOrderStatus(orderId: number, status: string) {
-    return OrderRepository.updateStatus(orderId, status);
+  async updateCartStatus(cartId: number, status: string) {
+    return CartRepository.updateStatus(cartId, status);
   }
 
-  async deleteAllOrdersByUser(userId: number) {
+  async clearUserCarts(userId: number) {
     return this.withTransaction(async (client) => {
-      const orders = await client.query(
-        `SELECT id FROM "order" WHERE user_id = $1`,
+      const carts = await client.query(
+        `SELECT id FROM cart WHERE user_id = $1 AND status = 'pending'`,
         [userId]
       );
 
-      const orderIds = orders.rows.map((row) => row.id);
+      const cartIds = carts.rows.map((row) => row.id);
 
-      if (orderIds.length === 0) {
+      if (cartIds.length === 0) {
         return { deletedCount: 0 };
       }
 
-      for (const orderId of orderIds) {
-        await OrderItemRepository.deleteByOrderId(client, orderId);
+      for (const cartId of cartIds) {
+        await CartItemRepository.deleteByCartId(client, cartId);
       }
 
-      await client.query(`DELETE FROM "order" WHERE user_id = $1`, [userId]);
+      await client.query(
+        `DELETE FROM cart WHERE user_id = $1 AND status = 'pending'`,
+        [userId]
+      );
 
-      return { deletedCount: orderIds.length };
+      return { deletedCount: cartIds.length };
     });
   }
 }
 
-export default new OrderService();
+export default new CartService();

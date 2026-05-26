@@ -1,46 +1,47 @@
 import paymentService from "../service/payment.service";
-import orderService from "../service/order.service";
-import orderRepository from "../repository/order.repository";
+import cartService from "../service/cart.service";
+import cartRepository from "../repository/cart.repository";
 import db from "../database/database";
 
 class PaymentController {
   async createPayment(req, res) {
     try {
-      const { orderId, items } = req.body;
+      const { cartId, orderId, items } = req.body;
+      const resolvedCartId = cartId ?? orderId;
       const userId = (req as any).user.id;
 
-      let order;
+      let cart;
 
-      if (orderId) {
-        order = await orderRepository.findByIdAndUser(db, orderId, userId);
+      if (resolvedCartId) {
+        cart = await cartRepository.findByIdAndUser(db, resolvedCartId, userId);
 
-        if (!order) {
-          return res.status(404).json({ message: "Order not found" });
+        if (!cart) {
+          return res.status(404).json({ message: "Cart not found" });
         }
 
-        if (order.status === "paid") {
-          return res.status(400).json({ message: "Order already paid" });
+        if (cart.status === "paid") {
+          return res.status(400).json({ message: "Cart already paid" });
         }
       } else {
         if (!items || !Array.isArray(items) || items.length === 0) {
           return res
             .status(400)
-            .json({ message: "Items are required to create order" });
+            .json({ message: "Items are required to create cart" });
         }
 
-        order = await orderService.createOrder(userId, {
-          items: items,
+        cart = await cartService.createCart(userId, {
+          items,
           status: "pending",
         });
       }
 
       const paymentUrl = paymentService.getPaymentUrl(
-        order.id,
-        order.amount,
-        `Order #${order.id}`
+        cart.id,
+        cart.amount,
+        `Order #${cart.id}`
       );
 
-      res.status(200).json({ paymentUrl, orderId: order.id });
+      res.status(200).json({ paymentUrl, cartId: cart.id, orderId: cart.id });
     } catch (error) {
       console.error("Error creating payment:", error);
       res.status(400).json({ message: error.message });
@@ -61,7 +62,7 @@ class PaymentController {
         return res.status(400).send("Invalid signature");
       }
 
-      await orderRepository.updateStatus(parseInt(InvId), "paid");
+      await cartRepository.updateStatus(parseInt(InvId), "paid");
 
       res.status(200).send(`OK${InvId}`);
     } catch (error) {
@@ -95,7 +96,7 @@ class PaymentController {
     try {
       const { InvId } = req.query;
 
-      await orderRepository.updateStatus(parseInt(InvId as string), "failed");
+      await cartRepository.updateStatus(parseInt(InvId as string), "failed");
 
       res.redirect(`${process.env.CLIENT_URL}/order/${InvId}/failed`);
     } catch (error) {

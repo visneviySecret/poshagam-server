@@ -122,7 +122,7 @@ class ProductService {
     if (existing.rows.length === 0) return [];
 
     const inOrders = await db.query(
-      "SELECT 1 FROM order_item WHERE product_id = $1 LIMIT 1",
+      "SELECT 1 FROM cart_item WHERE product_id = $1 LIMIT 1",
       [id]
     );
     if (inOrders.rows.length > 0) {
