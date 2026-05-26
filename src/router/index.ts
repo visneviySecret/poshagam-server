@@ -5,11 +5,9 @@ import AddressRouter from "./address.router";
 import CartRouter from "./cart.router";
 import PaymentRouter from "./payment.router";
 import MailRouter from "./mail.router";
-import S3ProxyRouter from "./s3-proxy.router";
 
 const router = Router();
 
-// router.use("/s3-proxy", S3ProxyRouter);
 router.use("/users", UserRouter);
 router.use("/products", ProductRouter);
 router.use("/addresses", AddressRouter);
