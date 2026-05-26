@@ -1,0 +1,38 @@
+name: Deploy Backend
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Deploy to production
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Execute deployment
+        run: |
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.VPS_HOST }} "
+            export NVM_DIR=\"\$HOME/.nvm\" &&
+            [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\" &&
+            nvm install 20 &&
+            nvm use 20 &&
+            nvm alias default 20 &&
+            cd /opt/poshagam-server &&
+            git pull origin master &&
+            rm -rf node_modules dist &&
+            npm install &&
+            npm run build &&
+            npm install -g pm2 &&
+            pm2 restart poshagam-server --update-env || pm2 start ecosystem.server.config.js --only poshagam-server &&
+            echo '✅ Deployment complete'
+          "
