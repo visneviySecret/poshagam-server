@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { upload } from "../middleware/upload.middleware";
+import { uploadAny } from "../middleware/upload.middleware";
 import { authMiddleware } from "../middleware/auth.middleware";
 import productController from "../controller/product.controller";
 import categoryController from "../controller/category.controller";
@@ -9,7 +9,7 @@ const router = Router();
 router.post(
   "/create",
   authMiddleware,
-  upload.any(),
+  uploadAny,
   productController.createProduct
 );
 router.get("/", productController.getProducts);
