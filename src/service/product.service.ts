@@ -118,7 +118,9 @@ class ProductService {
   }
 
   async deleteProductById(id) {
-    const existing = await db.query("SELECT * FROM product WHERE id = $1", [id]);
+    const existing = await db.query("SELECT * FROM product WHERE id = $1", [
+      id,
+    ]);
     if (existing.rows.length === 0) return [];
 
     const inOrders = await db.query(
@@ -134,9 +136,7 @@ class ProductService {
     }
 
     await db.query("DELETE FROM review WHERE product_id = $1", [id]);
-    await S3Service.deleteFiles(
-      this.collectProductFileKeys(existing.rows[0])
-    );
+    await S3Service.deleteFiles(this.collectProductFileKeys(existing.rows[0]));
 
     const products = await db.query(
       "DELETE FROM product WHERE id = $1 RETURNING *",
@@ -147,9 +147,9 @@ class ProductService {
 
   async editProductById(id, setParts, values) {
     const products = await db.query(
-      `UPDATE products SET ${setParts.join(
-        ", "
-      )} WHERE id = $${id} RETURNING *`,
+      `UPDATE product SET ${setParts.join(", ")} WHERE id = $${
+        values.length + 1
+      } RETURNING *`,
       [...values, id]
     );
     return products.rows;
