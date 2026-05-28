@@ -40,7 +40,18 @@ class S3Service {
       ContentType: file.mimetype,
     });
 
-    await s3.send(command);
+    try {
+      await s3.send(command);
+    } catch (error: any) {
+      if (error?.$metadata?.httpStatusCode === 413) {
+        const err = new Error(
+          `Хранилище отклонило загрузку (слишком большой файл): ${file.originalname}`
+        ) as Error & { statusCode?: number };
+        err.statusCode = 413;
+        throw err;
+      }
+      throw error;
+    }
 
     return key;
   }
