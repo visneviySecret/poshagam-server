@@ -37,7 +37,7 @@ class ProductService {
       `SELECT id, name, price, description, images, category_id, preview FROM product`
     );
 
-    return await this.appendImagesToProducts(products.rows);
+    return await this.appendFilesToProducts(products.rows);
   }
 
   async getProductById(id: string) {
@@ -46,7 +46,7 @@ class ProductService {
       [id]
     );
 
-    return await this.appendImagesToProducts(products.rows);
+    return await this.appendFilesToProducts(products.rows);
   }
 
   async getOwnerProducts(owner: string) {
@@ -54,10 +54,10 @@ class ProductService {
       `SELECT id, name, price, description, images, category_id, preview, instruction FROM product WHERE owner = $1`,
       [owner]
     );
-    return await this.appendImagesToProducts(products.rows);
+    return await this.appendFilesToProducts(products.rows);
   }
 
-  async appendImagesToProducts(products) {
+  async appendFilesToProducts(products) {
     const productsWithUrls = await Promise.all(
       products.map(async (product) => {
         let parsedImages = [];
@@ -74,11 +74,15 @@ class ProductService {
             })
           );
           const previewUrl = await S3Service.getFileUrl(product.preview);
+          const instructionUrl = await S3Service.getFileUrl(
+            product.instruction
+          );
 
           return {
             ...product,
             images: imagesUrls,
             preview: previewUrl,
+            instruction: instructionUrl,
           };
         }
 
