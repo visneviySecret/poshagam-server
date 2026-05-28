@@ -90,15 +90,14 @@ class ProductController {
       const ownerId = req.user.id;
 
       const ownerProducts = await productService.getOwnerProducts(ownerId);
-      const isOwnerProduct = ownerProducts.some(
+      const ownerProduct = ownerProducts.find(
         (product) => product.id === Number(id)
       );
 
-      if (!isOwnerProduct) {
+      if (!ownerProduct) {
         return res.status(403).json({ message: "Не ваш товар" });
       }
-      const product = productService.getProductById(id);
-      res.status(200).json(product);
+      res.status(200).json(ownerProduct);
     } catch (error) {
       res.status(400).json({ message: error.message });
     }

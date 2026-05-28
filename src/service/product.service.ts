@@ -51,7 +51,7 @@ class ProductService {
 
   async getOwnerProducts(owner: string) {
     const products = await db.query(
-      `SELECT id, name, price, description, images, category_id, preview FROM product WHERE owner = $1`,
+      `SELECT id, name, price, description, images, category_id, preview, instruction FROM product WHERE owner = $1`,
       [owner]
     );
     return await this.appendImagesToProducts(products.rows);
