@@ -47,8 +47,8 @@ class ProductController {
 
       res.status(201).json(product);
     } catch (error) {
-      console.error("Error creating product:", error);
-      res.status(400).json({ message: error.message });
+      const status = error?.statusCode || 400;
+      res.status(status).json({ message: error?.message });
     }
   }
 
