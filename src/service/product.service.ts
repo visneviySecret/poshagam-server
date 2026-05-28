@@ -67,26 +67,30 @@ class ProductService {
           parsedImages = [];
         }
 
-        if (Array.isArray(parsedImages) && parsedImages.length > 0) {
-          const imagesUrls = await Promise.all(
-            parsedImages.map(async (imageKey: string) => {
-              return await S3Service.getFileUrl(imageKey);
-            })
-          );
-          const previewUrl = await S3Service.getFileUrl(product.preview);
-          const instructionUrl = await S3Service.getFileUrl(
-            product.instruction
-          );
+        const imageKeys: string[] = Array.isArray(parsedImages)
+          ? parsedImages.filter(Boolean)
+          : [];
 
-          return {
-            ...product,
-            images: imagesUrls,
-            preview: previewUrl,
-            instruction: instructionUrl,
-          };
-        }
+        const imagesUrls = await Promise.all(
+          imageKeys.map(async (imageKey: string) => {
+            return await S3Service.getFileUrl(imageKey);
+          })
+        );
 
-        return { ...product, images: [] };
+        const previewUrl = product.preview
+          ? await S3Service.getFileUrl(product.preview)
+          : null;
+
+        const instructionUrl = product.instruction
+          ? await S3Service.getFileUrl(product.instruction)
+          : null;
+
+        return {
+          ...product,
+          images: imagesUrls,
+          preview: previewUrl,
+          instruction: instructionUrl,
+        };
       })
     );
 
