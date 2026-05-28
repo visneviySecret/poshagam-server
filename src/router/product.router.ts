@@ -22,6 +22,7 @@ router.patch(
 );
 router.get("/edit/:id", authMiddleware, productController.getProductForEdit);
 router.patch("/edit/:id", authMiddleware, productController.patchProduct);
+router.get("/:id", productController.getPublicProduct);
 router.delete("/:id", authMiddleware, productController.deleteProduct);
 
 export default router;

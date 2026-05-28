@@ -2,6 +2,20 @@ import productService from "../service/product.service";
 import S3Service from "../service/s3.service";
 
 class ProductController {
+  async getPublicProduct(req, res) {
+    try {
+      const { id } = req.params;
+      const products = await productService.getProductById(id);
+      const product = Array.isArray(products) ? products[0] : null;
+      if (!product) {
+        return res.status(404).json({ message: "Товар не найден" });
+      }
+      res.status(200).json(product);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
   async createProduct(req, res) {
     try {
       const { name, price, description, category } = req.body;
