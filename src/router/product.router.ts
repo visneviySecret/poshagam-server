@@ -13,6 +13,8 @@ router.post(
   productController.createProduct
 );
 router.get("/", productController.getProducts);
+router.get("/:id", productController.getPublicProduct);
+router.delete("/:id", authMiddleware, productController.deleteProduct);
 router.get("/owner", authMiddleware, productController.getProductsByOwner);
 router.get("/categories", authMiddleware, categoryController.getCategories);
 router.patch(
@@ -22,7 +24,5 @@ router.patch(
 );
 router.get("/edit/:id", authMiddleware, productController.getProductForEdit);
 router.patch("/edit/:id", authMiddleware, productController.patchProduct);
-router.get("/:id", productController.getPublicProduct);
-router.delete("/:id", authMiddleware, productController.deleteProduct);
 
 export default router;
