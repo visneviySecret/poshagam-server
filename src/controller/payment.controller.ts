@@ -75,20 +75,20 @@ class PaymentController {
     try {
       const { OutSum, InvId, SignatureValue } = req.query;
 
-      const isValid = paymentService.verifyResultSignature(
+      const isValid = paymentService.verifySuccessSignature(
         OutSum as string,
         InvId as string,
         SignatureValue as string
       );
 
       if (!isValid) {
-        return res.status(400).send("Invalid signature");
+        return res.redirect(`${process.env.CLIENT_URL}/fail?cartId=${InvId}`);
       }
 
-      res.redirect(`${process.env.CLIENT_URL}/order/${InvId}/success`);
+      res.redirect(`${process.env.CLIENT_URL}/success?cartId=${InvId}`);
     } catch (error) {
       console.error("Error handling payment success:", error);
-      res.redirect(`${process.env.CLIENT_URL}/order/error`);
+      res.redirect(`${process.env.CLIENT_URL}/fail`);
     }
   }
 
@@ -98,10 +98,10 @@ class PaymentController {
 
       await cartRepository.updateStatus(parseInt(InvId as string), "failed");
 
-      res.redirect(`${process.env.CLIENT_URL}/order/${InvId}/failed`);
+      res.redirect(`${process.env.CLIENT_URL}/fail?cartId=${InvId}`);
     } catch (error) {
       console.error("Error handling payment fail:", error);
-      res.redirect(`${process.env.CLIENT_URL}/order/error`);
+      res.redirect(`${process.env.CLIENT_URL}/fail`);
     }
   }
 }

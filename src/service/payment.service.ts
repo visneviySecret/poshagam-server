@@ -44,20 +44,46 @@ class PaymentService {
     return `${baseUrl}?${params.toString()}`;
   }
 
+  private hashNotificationSignature(
+    outSum: string,
+    invId: string,
+    password: string
+  ): string {
+    const signatureString = `${outSum}:${invId}:${password}`;
+    return crypto.createHash("md5").update(signatureString).digest("hex");
+  }
+
   verifyResultSignature(
     outSum: string,
     invId: string,
     signatureValue: string
   ): boolean {
-    if (!this.MERCHANT_LOGIN || !this.PASSWORD_2) {
+    if (!this.PASSWORD_2) {
       throw new Error("Robokassa credentials are not configured");
     }
 
-    const expectedSignature = this.generateSignature(
-      this.MERCHANT_LOGIN,
+    const expectedSignature = this.hashNotificationSignature(
       outSum,
       invId,
       this.PASSWORD_2
+    );
+
+    return expectedSignature.toLowerCase() === signatureValue.toLowerCase();
+  }
+
+  verifySuccessSignature(
+    outSum: string,
+    invId: string,
+    signatureValue: string
+  ): boolean {
+    if (!this.PASSWORD_1) {
+      throw new Error("Robokassa credentials are not configured");
+    }
+
+    const expectedSignature = this.hashNotificationSignature(
+      outSum,
+      invId,
+      this.PASSWORD_1
     );
 
     return expectedSignature.toLowerCase() === signatureValue.toLowerCase();
