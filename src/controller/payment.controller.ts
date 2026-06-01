@@ -8,7 +8,7 @@ class PaymentController {
     try {
       const { cartId, orderId, items } = req.body;
       const resolvedCartId = cartId ?? orderId;
-      const userId = (req as any).user.id;
+      const userId = req.user.id;
 
       let cart;
 
@@ -24,9 +24,9 @@ class PaymentController {
         }
       } else {
         if (!items || !Array.isArray(items) || items.length === 0) {
-          return res
-            .status(400)
-            .json({ message: "Items are required to create cart" });
+          return res.status(400).json({
+            message: "Items are required to create cart for unauthorised user",
+          });
         }
 
         cart = await cartService.createCart(userId, {
