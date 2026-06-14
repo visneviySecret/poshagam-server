@@ -1,11 +1,7 @@
 import nodemailer from "nodemailer";
-import { google, Auth } from "googleapis";
-import dotenv from "dotenv";
-dotenv.config({ quiet: true });
+import type { Transporter } from "nodemailer";
 
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const REFRESH_TOKEN = process.env.GOOGLE_CLOUD_REFRESH;
+const env = (key: string) => process.env[key]?.trim() ?? "";
 
 interface MailAttachment {
   filename: string;
@@ -22,46 +18,35 @@ interface SendMailOptions {
 }
 
 class MailService {
-  private user: string;
-  private oAuth2Client: Auth.OAuth2Client;
+  private readonly from = env("SMTP_FROM") || "noreply@poshagam.local";
+  private transporter: Transporter | null = null;
 
-  constructor() {
-    this.user = process.env.GOOGLE_CLIENT_USER;
-    this.oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET);
-    this.oAuth2Client.setCredentials({
-      refresh_token: REFRESH_TOKEN,
-    });
-  }
+  private getTransporter(): Transporter {
+    if (!this.transporter) {
+      const host = env("SMTP_HOST") || "localhost";
+      const port = parseInt(env("SMTP_PORT") || "587", 10);
+      const auth = { user: "api", pass: env("SMTP_API_TOKEN") };
 
-  private async getTransporter() {
-    const accessToken = await this.oAuth2Client.getAccessToken();
-    return nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: this.user,
-        clientId: CLIENT_ID,
-        clientSecret: CLIENT_SECRET,
-        refreshToken: REFRESH_TOKEN,
-        accessToken: accessToken.token,
-      },
-    });
+      this.transporter = nodemailer.createTransport({
+        host,
+        port,
+        auth,
+      });
+    }
+
+    return this.transporter;
   }
 
   async sendMail(options: SendMailOptions): Promise<void> {
-    try {
-      const transporter = await this.getTransporter();
-      await transporter.sendMail({
-        from: this.user,
-        to: options.to,
-        subject: options.subject,
-        text: options.text || "",
-        html: options.html || "",
-        attachments: options.attachments || [],
-      });
-    } catch (error) {
-      throw error;
-    }
+    const transporter = this.getTransporter();
+    await transporter.sendMail({
+      from: this.from,
+      to: options.to,
+      subject: options.subject,
+      text: options.text || "",
+      html: options.html || "",
+      attachments: options.attachments || [],
+    });
   }
 }
 
