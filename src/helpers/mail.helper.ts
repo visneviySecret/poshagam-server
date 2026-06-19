@@ -4,6 +4,31 @@ import cartRepository from "../repository/cart.repository";
 import { getInstructionEmailTemplate } from "../templates/instruction-email.template";
 import type { Product } from "../types/global";
 
+type InstructionProduct = Pick<Product, "id" | "name" | "instruction">;
+
+const buildAttachmentFileName = (product: InstructionProduct) => {
+  const safeName = product.name.replace(/[<>:"/\\|?*]/g, "_").trim();
+  return `${safeName || `product_${product.id}`}_инструкция.pdf`;
+};
+
+const getAttachments = async (products: InstructionProduct[]) => {
+  return Promise.all(
+    products.map(async (product) => ({
+      filename: buildAttachmentFileName(product),
+      content: await S3Service.getFileBuffer(product.instruction),
+      contentType: "application/pdf",
+    }))
+  );
+};
+
+const getSubject = (products: InstructionProduct[], cartId?: number) => {
+  if (products.length === 1) {
+    return `Инструкция ${products[0].name}`;
+  }
+
+  return `Инструкции к заказу №${cartId}`;
+};
+
 export const sendInstructionsForCart = async (
   cartId: number
 ): Promise<void> => {
@@ -13,32 +38,24 @@ export const sendInstructionsForCart = async (
     return;
   }
 
-  for (const product of context.products) {
-    await sendInstructionEmail(context.email, {
-      id: product.id,
-      name: product.name,
-      instruction: product.instruction,
-    } as Product);
-  }
+  const products = context.products as InstructionProduct[];
+
+  await sendInstructionEmail(context.email, products, cartId);
 };
 
 export const sendInstructionEmail = async (
   email: string,
-  product: Pick<Product, "id" | "name" | "instruction">
+  products: InstructionProduct | InstructionProduct[],
+  cartId?: number
 ): Promise<void> => {
-  const pdfBuffer = await S3Service.getFileBuffer(product.instruction);
-  const fileName = `${product.name}_инструкция.pdf`;
+  const productList = Array.isArray(products) ? products : [products];
+  const productNames = productList.map((product) => product.name);
+  const attachments = await getAttachments(productList);
 
   await mailService.sendMail({
     to: email,
-    subject: "Инструкция " + product.name,
-    html: getInstructionEmailTemplate(product.name),
-    attachments: [
-      {
-        filename: fileName,
-        content: pdfBuffer,
-        contentType: "application/pdf",
-      },
-    ],
+    subject: getSubject(productList, cartId),
+    html: getInstructionEmailTemplate(productNames),
+    attachments,
   });
 };
