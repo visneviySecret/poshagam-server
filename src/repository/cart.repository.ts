@@ -11,10 +11,8 @@ class CartRepository {
     return result.rows[0];
   }
 
-  async findById(client: PoolClient, cartId: number) {
-    const result = await client.query(`SELECT * FROM cart WHERE id = $1`, [
-      cartId,
-    ]);
+  async findById(cartId: number) {
+    const result = await db.query(`SELECT * FROM cart WHERE id = $1`, [cartId]);
     return result.rows[0];
   }
 
@@ -52,6 +50,35 @@ class CartRepository {
       [userId]
     );
     return result.rows[0];
+  }
+
+  async getCartInstructionContext(cartId: number) {
+    const cartResult = await db.query(
+      `SELECT c.id, c.status, u.email
+       FROM cart c
+       JOIN "user" u ON u.id = c.user_id
+       WHERE c.id = $1`,
+      [cartId]
+    );
+
+    if (!cartResult.rows[0]) {
+      return null;
+    }
+
+    const productsResult = await db.query(
+      `SELECT DISTINCT p.id, p.name, p.instruction
+       FROM cart_item ci
+       JOIN product p ON p.id = ci.product_id
+       WHERE ci.cart_id = $1
+         AND p.instruction IS NOT NULL
+         AND TRIM(p.instruction) <> ''`,
+      [cartId]
+    );
+
+    return {
+      ...cartResult.rows[0],
+      products: productsResult.rows,
+    };
   }
 
   async getWithItems(id: number, clientProp?: PoolClient) {

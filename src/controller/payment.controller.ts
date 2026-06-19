@@ -1,38 +1,20 @@
 import paymentService from "../service/payment.service";
 import cartService from "../service/cart.service";
 import cartRepository from "../repository/cart.repository";
-import db from "../database/database";
+import { sendInstructionsForCart } from "../helpers/mail.helper";
 
 class PaymentController {
   async createPayment(req, res) {
     try {
-      const { cartId, orderId, items } = req.body;
-      const resolvedCartId = cartId ?? orderId;
       const userId = req.user.id;
+      const cart = await cartService.getCartByUser(userId);
 
-      let cart;
+      if (!cart || !cart.items?.length) {
+        return res.status(400).json({ message: "Cart is empty" });
+      }
 
-      if (resolvedCartId) {
-        cart = await cartRepository.findByIdAndUser(db, resolvedCartId, userId);
-
-        if (!cart) {
-          return res.status(404).json({ message: "Cart not found" });
-        }
-
-        if (cart.status === "paid") {
-          return res.status(400).json({ message: "Cart already paid" });
-        }
-      } else {
-        if (!items || !Array.isArray(items) || items.length === 0) {
-          return res.status(400).json({
-            message: "Items are required to create cart for unauthorised user",
-          });
-        }
-
-        cart = await cartService.createCart(userId, {
-          items,
-          status: "pending",
-        });
+      if (cart.status === "paid") {
+        return res.status(400).json({ message: "Cart already paid" });
       }
 
       const paymentUrl = paymentService.getPaymentUrl(
@@ -62,7 +44,24 @@ class PaymentController {
         return res.status(400).send("Invalid signature");
       }
 
-      await cartRepository.updateStatus(parseInt(InvId), "paid");
+      const cartId = parseInt(InvId, 10);
+      const cart = await cartRepository.findById(cartId);
+
+      if (!cart) {
+        return res.status(404).send("Cart not found");
+      }
+
+      if (cart.status === "paid") {
+        return res.status(200).send(`OK${InvId}`);
+      }
+
+      try {
+        await sendInstructionsForCart(cartId);
+      } catch (emailError) {
+        console.error("Instruction email error:", emailError);
+      }
+
+      await cartRepository.updateStatus(cartId, "paid");
 
       res.status(200).send(`OK${InvId}`);
     } catch (error) {
